@@ -1,44 +1,44 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Assistant émotionnel</title>
-	<link rel="stylesheet" href="styles.css">
-	<link rel="icon" href="bot.jpg">
-	<link rel="manifest" href="manifest.webmanifest">
-	<meta name="theme-color" content="#375169">
-	<meta name="description" content="Assistant émotionnel bienveillant avec PWA, voix, et mémoire de conversation.">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistant émotionnel</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="bot.jpg">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#375169">
+    <meta name="description" content="Assistant émotionnel bienveillant avec PWA, voix, et mémoire de conversation.">
 </head>
 <body>
-	<div class="chat-container">
-		<div class="chat-header">
-			<h1>Assistant émotionnel</h1>
-			<div class="header-actions">
-				<button id="toggle-tts" aria-pressed="false" title="Activer/Désactiver la voix">🔊</button>
-				<button id="clear-chat" title="Effacer la conversation">🧹</button>
-			</div>
-		</div>
-		<div class="chat-messages" id="chat-messages" aria-live="polite"></div>
-		<div id="typing-indicator" class="typing-indicator hidden" aria-hidden="true">
-			<span></span><span></span><span></span>
-		</div>
-		<div class="chat-input-container">
-			<textarea id="user-input" placeholder="Comment te sens-tu aujourd'hui ?"></textarea>
-			<div class="button-group">
-				<button id="send-button">Envoyer</button>
-				<button id="start-voice">Parler</button>
-			</div>
-		</div>
-	</div>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>Assistant émotionnel</h1>
+            <div class="header-actions">
+                <button id="toggle-tts" aria-pressed="false" title="Activer/Désactiver la voix">🔊</button>
+                <button id="clear-chat" title="Effacer la conversation">🧹</button>
+            </div>
+        </div>
+        <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
+        <div id="typing-indicator" class="typing-indicator hidden" aria-hidden="true">
+            <span></span><span></span><span></span>
+        </div>
+        <div class="chat-input-container">
+            <textarea id="user-input" placeholder="Comment te sens-tu aujourd'hui ?"></textarea>
+            <div class="button-group">
+                <button id="send-button">Envoyer</button>
+                <button id="start-voice">Parler</button>
+            </div>
+        </div>
+    </div>
 
-	<script src="script.js"></script>
-	<script>
-		if ('serviceWorker' in navigator) {
-			window.addEventListener('load', function() {
-				navigator.serviceWorker.register('/sw.js');
-			});
-		}
-	</script>
+    <script src="script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js');
+            });
+        }
+    </script>
 </body>
 </html>

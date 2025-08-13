@@ -1,146 +1,186 @@
 
-const API_KEY = 'AIzaSyBGr1htdW29Ut34WsZJECCQfmlp8ZM8U-I';
+const API_ENDPOINT = '/api/chat';
+const STORAGE_KEY = 'chat_history_v1';
+const TTS_KEY = 'tts_enabled';
+const MAX_HISTORY = 10;
 
-
-const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
-
-// Récupère la div où seront affichés les messages
 const chatMessages = document.getElementById('chat-messages');
-
-// Récupère la zone de saisie de l'utilisateur
 const userInput = document.getElementById('user-input');
-
-// Récupère le bouton pour envoyer un message
 const sendButton = document.getElementById('send-button');
+const typingIndicator = document.getElementById('typing-indicator');
+const toggleTTSButton = document.getElementById('toggle-tts');
+const clearChatButton = document.getElementById('clear-chat');
 
-// Fonction asynchrone qui envoie la requête à l'API
-async function generateResponse(prompt) {
+let ttsEnabled = localStorage.getItem(TTS_KEY) === '1';
 
-    // Instruction système 
-    const systemInstruction = `Tu es un assistant émotionnel (un psychologue) bienveillant qui aborde également les comportements et les ressentis des individus.
-    - Si l'utilisateur exprime des propos ou pose des questions qui ne relèvent pas de ton rôle, 
-    informe-le que tu es là pour l'assister émotionnellement, puis pose une question pour engager la conversation.
+function saveHistory(history) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(history)); } catch {}
+}
 
-Ton rôle :
+function loadHistory() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const arr = raw ? JSON.parse(raw) : [];
+        if (Array.isArray(arr)) return arr;
+    } catch {}
+    return [];
+}
 
-- Répondre aux questions de l'utilisateur et lui poser des questions ouvertes pour comprendre son état émotionnel.
+function formatTime(ts) {
+    try {
+        const d = ts ? new Date(ts) : new Date();
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch { return ''; }
+}
 
-- Analyser les réponses ou questions avec empathie et pose moins de questions pour l'encourager à poursuivre la conversation.
+function showTyping(show) {
+    if (!typingIndicator) return;
+    typingIndicator.classList.toggle('hidden', !show);
+    typingIndicator.setAttribute('aria-hidden', show ? 'false' : 'true');
+}
 
-- Fournir des conseils basés sur la psychologie positive.
+function cleanMarkdown(text) {
+    return (text || '')
+        .replace(/#{1,6}\s?/g, '')
+        .replace(/\*\*/g, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+}
 
-- Maintenir un ton chaleureux et encourageant.
-
-- donne lui des conseils celon ce qu'il dira si necessaire.
-
--ajoute des emojis celon ce qu'il envoie comme reponse ou question(joie, tristesse...).
-
-- Ne pas trop parler si ce n'est pas nécessaire.`;
-
-
-    // l'instruction système avec la question de l'utilisateur
-    const fullPrompt = systemInstruction + "\n\nQuestion de l'utilisateur: " + prompt;
-    
-    // Appel à l'API avec fetch. Méthode POST et envoie les données en JSON
-    const response = await fetch(`${API_URL}?key=${API_KEY}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ // Le corps de la requête
-            contents: [
-                {
-                    parts: [
-                        {
-                            text: fullPrompt //  l on veux dire a ia
-
-
-                        }
-                    ]
-                }
-            ]
-        })
-    });
-
-    // Si l'API échoue, on affiche une erreur
-    if (!response.ok) {
-        throw new Error('API invalide');
+function addMessage({ text, isUser, emotion, timestamp }) {
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('message');
+    messageElement.classList.add(isUser ? 'user-message' : 'bot-message');
+    if (!isUser && emotion) {
+        messageElement.classList.add(emotion);
     }
 
-    // On récupère les données JSON et extrait la réponse générée
-    const data = await response.json();
-    return data.candidates[0].content.parts[0].text;
-}
-
-// Fonction pour nettoyer le markdown des réponses (ex: supprimer les ** ou ###)
-function cleanMarkdown(text) {
-    return text
-        .replace(/#{1,6}\s?/g, '')   // Supprime les titres markdown (##, ###, etc.)
-        .replace(/\*\*/g, '')        // Supprime le gras en markdown (**texte**)
-        .replace(/\n{3,}/g, '\n\n')  // Réduit les lignes vides excessives
-        .trim();                     // Supprime les espaces en début/fin
-}
-
-// Fonction pour afficher un message dans le chat (utilisateur ou bot)
-function addMessage(message, isUser) {
-    const messageElement = document.createElement('div');           // Crée un <div> pour le message
-    messageElement.classList.add('message');                        // Ajoute la classe commune
-
-    messageElement.classList.add(isUser ? 'user-message' : 'bot-message'); // Ajoute une classe différente selon le type
-
-    const profileImage = document.createElement('img');             
+    const profileImage = document.createElement('img');
     profileImage.classList.add('profile-image');
-    profileImage.src = isUser ? 'user.jfif' : 'bot.jpg';            
+    profileImage.src = isUser ? 'user.jfif' : 'bot.jpg';
     profileImage.alt = isUser ? 'User' : 'Bot';
 
-    const messageContent = document.createElement('div');           // Contenu du message
+    const messageContent = document.createElement('div');
     messageContent.classList.add('message-content');
-    messageContent.textContent = message;
+    messageContent.textContent = text;
 
-    messageElement.appendChild(profileImage);                       
-    messageElement.appendChild(messageContent);                     
+    const meta = document.createElement('small');
+    meta.classList.add('message-meta');
+    meta.textContent = formatTime(timestamp);
 
-    chatMessages.appendChild(messageElement);               // Ajoute le message dans le chat
-    chatMessages.scrollTop = chatMessages.scrollHeight;    // Scroll en bas du chat automatiquement
+    messageElement.appendChild(profileImage);
+    messageElement.appendChild(messageContent);
+    messageElement.appendChild(meta);
+
+    chatMessages.appendChild(messageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Fonction qui gère l’envoi du message de l’utilisateur
+function speak(text) {
+    try {
+        if (!ttsEnabled) return;
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        const voices = window.speechSynthesis.getVoices();
+        const fr = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('fr'));
+        if (fr) utterance.voice = fr;
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        window.speechSynthesis.speak(utterance);
+    } catch {}
+}
+
+async function requestBotResponse(history) {
+    const payload = {
+        messages: history.slice(-MAX_HISTORY).map(m => ({ role: m.isUser ? 'user' : 'assistant', text: m.text }))
+    };
+    const response = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        credentials: 'same-origin'
+    });
+    if (!response.ok) throw new Error('API error');
+    return response.json();
+}
+
 async function handleUserInput() {
-    const userMessage = userInput.value.trim();       // Récupère et nettoie le texte
+    const userMessage = (userInput.value || '').trim();
+    if (!userMessage) return;
 
-    if (userMessage) {
-        addMessage(userMessage, true);                              
-        userInput.value = '';            // Vide la zone de saisie
-        sendButton.disabled = true;      // Désactive le bouton
-        userInput.disabled = true;
+    const history = loadHistory();
+    const userEntry = { text: userMessage, isUser: true, timestamp: Date.now() };
+    addMessage(userEntry);
+    history.push(userEntry);
+    saveHistory(history);
 
-        try {
-            const botMessage = await generateResponse(userMessage); // Génère la réponse IA
-            addMessage(cleanMarkdown(botMessage), false);           // Affiche la réponse nettoyée
-        } catch (error) {
-            console.error('Error:', error);
-            addMessage('désolé il y a une erreur. veuillez recommencer.', false); // Message d’erreur
-        } finally {
-            sendButton.disabled = false;
-            userInput.disabled = false;
-            userInput.focus();                                      // Redonne le focus à la zone texte
-        }
+    userInput.value = '';
+    sendButton.disabled = true;
+    userInput.disabled = true;
+    showTyping(true);
+
+    try {
+        const data = await requestBotResponse(history);
+        const text = cleanMarkdown(data.text || '');
+        const emotion = data.emotion || 'neutre';
+        const botEntry = { text, isUser: false, emotion, timestamp: Date.now() };
+        addMessage(botEntry);
+        const updated = loadHistory();
+        updated.push(botEntry);
+        saveHistory(updated);
+        speak(text);
+    } catch (error) {
+        console.error(error);
+        addMessage({ text: 'Désolé, une erreur est survenue. Réessaie dans un instant.', isUser: false, timestamp: Date.now() });
+    } finally {
+        showTyping(false);
+        sendButton.disabled = false;
+        userInput.disabled = false;
+        userInput.focus();
     }
 }
 
-// Événement déclenché quand on clique sur le bouton d'envoi
 sendButton.addEventListener('click', handleUserInput);
 
-// Événement déclenché quand on appuie sur "Entrée" dans le champ de saisie
 userInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { // Empêche les retours à la ligne (sauf si Shift)
+    if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        handleUserInput(); // Lance la fonction d’envoi
+        handleUserInput();
     }
 });
 
+// Auto-resize textarea
+userInput.addEventListener('input', () => {
+    userInput.style.height = 'auto';
+    userInput.style.height = Math.min(userInput.scrollHeight, 128) + 'px';
+});
 
-// Intégration de la reconnaissance vocale
+// Toggle TTS
+if (toggleTTSButton) {
+    toggleTTSButton.setAttribute('aria-pressed', ttsEnabled ? 'true' : 'false');
+    toggleTTSButton.addEventListener('click', () => {
+        ttsEnabled = !ttsEnabled;
+        localStorage.setItem(TTS_KEY, ttsEnabled ? '1' : '0');
+        toggleTTSButton.setAttribute('aria-pressed', ttsEnabled ? 'true' : 'false');
+    });
+}
+
+// Clear chat
+if (clearChatButton) {
+    clearChatButton.addEventListener('click', () => {
+        try { localStorage.removeItem(STORAGE_KEY); } catch {}
+        chatMessages.innerHTML = '';
+    });
+}
+
+// Load history on startup
+(function bootstrap() {
+    const history = loadHistory();
+    history.forEach(entry => addMessage(entry));
+})();
+
+// Voice Recognition (keep existing feature)
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
@@ -157,18 +197,17 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
 
     recognition.addEventListener('result', (event) => {
         const transcript = event.results[0][0].transcript;
-        userInput.value = transcript; // Affiche le texte reconnu dans la zone de saisie
+        userInput.value = transcript;
         handleUserInput();
     });
 
     recognition.addEventListener('error', (event) => {
-        console.error("Erreur de reconnaissance vocale:", event.error);
+        console.error('Erreur de reconnaissance vocale:', event.error);
     });
 } else {
-    // Si la reconnaissance vocale n'est pas supportée, désactiver le bouton correspondant
     const voiceButton = document.getElementById('start-voice');
     if (voiceButton) {
         voiceButton.disabled = true;
-        voiceButton.textContent = "Reconnaissance vocale non supportée";
+        voiceButton.textContent = 'Reconnaissance vocale non supportée';
     }
 }

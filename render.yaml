@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: assistant-emotionnel
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ENABLE_LOGGING
+        value: false
+      - key: PORT
+        value: 3000
