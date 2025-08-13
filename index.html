@@ -1,28 +1,241 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot roro</title>
+    <meta name="description" content="Assistant émotionnel intelligent basé sur l'IA pour votre bien-être quotidien">
+    <meta name="keywords" content="assistant, émotion, IA, bien-être, psychologie, chatbot">
+    <meta name="author" content="Assistant Émotionnel">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#4A90E2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Assistant IA">
+    
+    <!-- PWA Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16x16.png">
+    <link rel="apple-touch-icon" href="icons/icon-152x152.png">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <title>Assistant Émotionnel Intelligent</title>
+    
+    <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
-    <link icon="image" url="user.jpg">
-    </head>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
 <body>
-  
-    <div class="chat-container">
-        <div class="chat-header">
-            <h1>Assistant emotionnel</h1>
-        </div>
-        <div class="chat-messages" id="chat-messages"></div>
-        <div class="chat-input-container">
-            <textarea id="user-input" placeholder="comment te sens-tu...?"></textarea>
-            <div class="button-group">
-            <button id="send-button">Envoyer</button>
-            <button id="start-voice">Parler</button>
-        </div>
+    <!-- Notification d'installation PWA -->
+    <div id="pwa-install-prompt" class="pwa-prompt hidden">
+        <div class="pwa-prompt-content">
+            <i class="fas fa-download"></i>
+            <span>Installer l'application</span>
+            <button id="pwa-install-btn" class="btn-primary">Installer</button>
+            <button id="pwa-dismiss-btn" class="btn-secondary">Plus tard</button>
         </div>
     </div>
 
+    <!-- Barre de navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="fas fa-brain"></i>
+            <span>Assistant IA</span>
+        </div>
+        <div class="nav-actions">
+            <button id="theme-toggle" class="btn-icon" title="Changer de thème">
+                <i class="fas fa-moon"></i>
+            </button>
+            <button id="settings-btn" class="btn-icon" title="Paramètres">
+                <i class="fas fa-cog"></i>
+            </button>
+            <button id="history-btn" class="btn-icon" title="Historique">
+                <i class="fas fa-history"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Container principal -->
+    <div class="main-container">
+        <!-- Sidebar pour l'historique et les paramètres -->
+        <aside id="sidebar" class="sidebar hidden">
+            <div class="sidebar-header">
+                <h3 id="sidebar-title">Paramètres</h3>
+                <button id="close-sidebar" class="btn-icon">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="sidebar-content">
+                <!-- Contenu dynamique de la sidebar -->
+            </div>
+        </aside>
+
+        <!-- Container du chat -->
+        <div class="chat-container">
+            <!-- En-tête du chat -->
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <div class="bot-avatar">
+                        <img src="bot.jpg" alt="Assistant IA" class="avatar-img">
+                        <div class="status-indicator online"></div>
+                    </div>
+                    <div class="chat-header-text">
+                        <h1>Assistant Émotionnel</h1>
+                        <p class="status-text">En ligne • Prêt à vous aider</p>
+                    </div>
+                </div>
+                <div class="chat-header-actions">
+                    <button id="clear-chat" class="btn-secondary" title="Effacer la conversation">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button id="export-chat" class="btn-secondary" title="Exporter la conversation">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Zone des messages -->
+            <div class="chat-messages" id="chat-messages">
+                <!-- Message de bienvenue -->
+                <div class="message bot-message">
+                    <div class="message-avatar">
+                        <img src="bot.jpg" alt="Assistant IA" class="avatar-img">
+                    </div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author">Assistant IA</span>
+                            <span class="message-time" id="welcome-time"></span>
+                        </div>
+                        <div class="message-text">
+                            Bonjour ! Je suis votre assistant émotionnel. Comment vous sentez-vous aujourd'hui ? 
+                            Je suis là pour vous écouter et vous accompagner dans votre bien-être. 😊
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suggestions de conversation -->
+            <div id="conversation-suggestions" class="suggestions-container">
+                <div class="suggestions-title">Suggestions de conversation :</div>
+                <div class="suggestions-grid">
+                    <button class="suggestion-chip" data-suggestion="Comment te sens-tu aujourd'hui ?">
+                        Comment te sens-tu aujourd'hui ?
+                    </button>
+                    <button class="suggestion-chip" data-suggestion="J'ai du mal à dormir">
+                        J'ai du mal à dormir
+                    </button>
+                    <button class="suggestion-chip" data-suggestion="Je me sens stressé">
+                        Je me sens stressé
+                    </button>
+                    <button class="suggestion-chip" data-suggestion="Comment gérer l'anxiété ?">
+                        Comment gérer l'anxiété ?
+                    </button>
+                </div>
+            </div>
+
+            <!-- Zone de saisie -->
+            <div class="chat-input-container">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="user-input" 
+                        placeholder="Décrivez comment vous vous sentez ou posez votre question..."
+                        maxlength="1000"
+                        rows="1"
+                    ></textarea>
+                    <div class="input-actions">
+                        <button id="emoji-picker" class="btn-icon" title="Ajouter une emoji">
+                            <i class="fas fa-smile"></i>
+                        </button>
+                        <button id="attach-file" class="btn-icon" title="Joindre un fichier">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button id="start-voice" class="btn-voice" title="Parler">
+                        <i class="fas fa-microphone"></i>
+                        <span>Parler</span>
+                    </button>
+                    <button id="send-button" class="btn-send" title="Envoyer">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>Envoyer</span>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <span class="char-count">
+                        <span id="char-count">0</span>/1000
+                    </span>
+                    <span class="typing-indicator hidden" id="typing-indicator">
+                        <i class="fas fa-circle"></i>
+                        <i class="fas fa-circle"></i>
+                        <i class="fas fa-circle"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal des paramètres -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Paramètres</h3>
+                <button id="close-settings" class="btn-icon">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label>Thème</label>
+                    <select id="theme-select">
+                        <option value="light">Clair</option>
+                        <option value="dark">Sombre</option>
+                        <option value="auto">Automatique</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label>Langue</label>
+                    <select id="language-select">
+                        <option value="fr">Français</option>
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label>Notifications</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="notifications-toggle">
+                        <span class="toggle-slider"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
     <script src="script.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('ServiceWorker enregistré avec succès:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('Échec de l\'enregistrement du ServiceWorker:', error);
+                    });
+            });
+        }
+    </script>
 </body>
 </html>

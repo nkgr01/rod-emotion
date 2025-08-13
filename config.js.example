@@ -1,0 +1,43 @@
+// Configuration de l'API - À configurer selon votre environnement
+// Copiez ce fichier vers config.js et remplacez les valeurs par défaut
+
+const CONFIG = {
+    // Remplacez par votre vraie clé API dans un environnement de production
+    API_KEY: 'YOUR_API_KEY_HERE',
+    API_URL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
+    
+    // Configuration de sécurité
+    MAX_MESSAGE_LENGTH: 1000,
+    RATE_LIMIT_DELAY: 1000, // 1 seconde entre les messages
+    
+    // Configuration de l'IA
+    MODEL_NAME: 'gemini-1.5-flash-latest',
+    MAX_TOKENS: 1000,
+    
+    // Configuration de l'interface
+    THEME: 'light', // 'light', 'dark', 'auto'
+    LANGUAGE: 'fr',
+    
+    // Configuration des fonctionnalités
+    ENABLE_VOICE: true,
+    ENABLE_HISTORY: true,
+    ENABLE_EXPORT: true,
+    ENABLE_SUGGESTIONS: true
+};
+
+// Validation de la configuration
+function validateConfig() {
+    if (!CONFIG.API_KEY || CONFIG.API_KEY === 'YOUR_API_KEY_HERE') {
+        console.warn('⚠️ Clé API non configurée. Veuillez configurer votre clé API dans config.js');
+        return false;
+    }
+    return true;
+}
+
+// Export de la configuration
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = CONFIG;
+} else {
+    window.CONFIG = CONFIG;
+    window.validateConfig = validateConfig;
+}
