@@ -47,7 +47,7 @@ Un assistant émotionnel basé sur l'IA, conçu pour accompagner votre bien-êtr
 
 1. **Cloner le projet**
    ```bash
-   git clone [URL_DU_REPO]
+   git clone https://github.com/nkgr01/rod-emotion.git
    cd assistant-emotionnel
    ```
 
